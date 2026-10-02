@@ -5,11 +5,52 @@
   const phone = (body.dataset.whatsapp || '').replace(/\D/g, '');
   const waUrl = text => `https://wa.me/${phone}${text ? `?text=${encodeURIComponent(text)}` : ''}`;
 
+  // Pixel da Meta: só carrega depois que a pessoa aceita os cookies (LGPD).
+  // O ID fica no atributo data-pixel do <body>; sem ele, nada é carregado.
+  const pixelId = (body.dataset.pixel || '').replace(/\D/g, '');
+  const CONSENT_KEY = 'solis-cookies';
+  const readConsent = () => { try { return localStorage.getItem(CONSENT_KEY); } catch (e) { return null; } };
+  const saveConsent = v => { try { localStorage.setItem(CONSENT_KEY, v); } catch (e) {} };
+
+  function loadPixel() {
+    if (!pixelId || window.fbq) return;
+    /* eslint-disable */
+    !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+    /* eslint-enable */
+    window.fbq('init', pixelId);
+    window.fbq('track', 'PageView');
+  }
+  const track = (event, params) => { if (window.fbq) window.fbq('track', event, params || {}); };
+
+  function consentBanner() {
+    const bar = document.createElement('div');
+    bar.className = 'cookie-bar';
+    bar.setAttribute('role', 'region');
+    bar.setAttribute('aria-label', 'Aviso de cookies');
+    bar.innerHTML = '<p>Usamos cookies para medir o resultado dos nossos anúncios. Você escolhe se aceita. <a href="privacidade.html#cookies">Saiba mais</a></p>' +
+      '<div class="cookie-actions"><button type="button" class="btn btn-ghost" data-c="recusado">Recusar</button><button type="button" class="btn btn-primary" data-c="aceito">Aceitar</button></div>';
+    bar.addEventListener('click', e => {
+      const b = e.target.closest('[data-c]');
+      if (!b) return;
+      saveConsent(b.dataset.c);
+      bar.remove();
+      if (b.dataset.c === 'aceito') loadPixel();
+    });
+    document.body.appendChild(bar);
+  }
+
+  if (pixelId) {
+    const consent = readConsent();
+    if (consent === 'aceito') loadPixel();
+    else if (consent !== 'recusado') consentBanner();
+  }
+
   // Links "falar no WhatsApp" usam a mensagem do atributo data-wa-text.
   document.querySelectorAll('[data-wa]').forEach(a => {
     a.href = waUrl(a.dataset.waText || body.dataset.waDefault || '');
     a.target = '_blank';
     a.rel = 'noopener';
+    a.addEventListener('click', () => track('Contact', { content_name: 'WhatsApp' }));
   });
 
   // Menu do celular.
@@ -83,6 +124,7 @@
       if (v) lines.push(`${el.dataset.label}: ${v}`);
     });
     if (form.dataset.outro) lines.push('', form.dataset.outro);
+    track('Lead', { content_name: 'Formulário do site' });
     window.open(waUrl(lines.join('\n')), '_blank', 'noopener');
     const note = form.querySelector('.form-note');
     if (note) note.textContent = 'Abrimos o WhatsApp com a sua mensagem. É só tocar em enviar.';

@@ -307,3 +307,16 @@ fieldset.field { border: 0; margin: 0; padding: 0; }
   *, *::before, *::after { transition: none !important; animation: none !important; }
   .btn:hover, .wa-float:hover { transform: none; }
 }
+
+/* ---------- aviso de cookies (LGPD) ---------- */
+.cookie-bar {
+  position: fixed; left: 16px; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 70;
+  max-width: 720px; margin-inline: auto; background: var(--ink); color: #fff; border-radius: 10px;
+  padding: 16px 18px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px;
+  box-shadow: 0 12px 40px rgba(15,34,51,.35); font-size: .92rem;
+}
+.cookie-bar p { flex: 1 1 280px; color: var(--aco-claro); }
+.cookie-bar a { color: #fff; }
+.cookie-actions { display: flex; gap: 8px; }
+.cookie-bar .btn { min-height: 42px; padding: 0 18px; font-size: .9rem; }
+.cookie-bar .btn-ghost { background: transparent; color: #fff; border-color: var(--line-ink); }
